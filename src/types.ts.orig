@@ -1,0 +1,131 @@
+export type Page =
+  | 'home'
+  | 'experiences'
+  | 'stay'
+  | 'booking-flow'
+  | 'ai-planner'
+  | 'farm-store'
+  | 'gallery'
+  | 'about'
+  | 'blog'
+  | 'contact'
+  | 'account'
+  | 'my-bookings'
+  | 'my-itinerary'
+  | 'reviews'
+  | 'appearance'
+  | 'settings'
+  | 'auth'
+  | 'payment'
+  | 'help'
+  | 'admin'
+
+export interface UserProfile {
+  name: string
+  email: string
+  phone: string
+  language: 'english' | 'hindi' | 'marathi'
+  a11yPrefs: string[]
+  role?: 'user' | 'admin'
+}
+
+export interface AccessibilityConfig {
+  textSize: 'normal' | 'large' | 'xlarge'
+  theme: 'standard' | 'farm' | 'dark' | 'high-contrast'
+  font: 'source' | 'atkinson' | 'serif'
+  letterSpacing: 'normal' | 'wide' | 'wider'
+  lineSpacing: 'normal' | 'relaxed' | 'loose'
+  iconSize: 'small' | 'medium' | 'large'
+  highContrast: boolean
+  voiceNavigation: boolean
+  screenReader: boolean
+  captions: boolean
+  reduceAnimation: boolean
+  language: 'english' | 'marathi' | 'hindi'
+}
+
+export interface BookingState {
+  accommodation: { id: string; name: string; type: string; price: number } | null
+  experience: { id: string; name: string } | null
+  checkIn: string | null
+  checkOut: string | null
+  nights: number
+  adults: number
+  children: number
+  accessibilityNeeds: string[]
+  plannerPrefs: PlannerPrefs | null
+  itinerary: GeneratedDay[] | null
+  totalPrice: number
+}
+
+export type PaymentMethod = 'upi' | 'property' | 'deposit' | 'card'
+
+export interface ConfirmedBooking {
+  id: string
+  booking: BookingState
+  paymentMethod: PaymentMethod
+  amountPaid: number
+  remainingAmount: number
+  refundableAmount: number
+  confirmedAt: string
+}
+
+export interface PlannerPrefs {
+  people: number
+  days: number
+  travelType: string
+  interests: string[]
+  accessibility: string[]
+}
+
+export interface GeneratedDay {
+  day: number
+  title: string
+  theme: string
+  activities: {
+    time: string
+    name: string
+    duration: string
+    description: string
+    icon: string
+    accessibility: string[]
+  }[]
+}
+
+export interface CartItem {
+  id: string
+  name: string
+  price: number
+  quantity: number
+  image: string
+  unit: string
+}
+
+export const defaultBooking: BookingState = {
+  accommodation: null,
+  experience: null,
+  checkIn: null,
+  checkOut: null,
+  nights: 0,
+  adults: 2,
+  children: 0,
+  accessibilityNeeds: [],
+  plannerPrefs: null,
+  itinerary: null,
+  totalPrice: 0,
+}
+
+export const defaultA11y: AccessibilityConfig = {
+  textSize: 'normal',
+  theme: 'standard',
+  font: 'source',
+  letterSpacing: 'normal',
+  lineSpacing: 'normal',
+  iconSize: 'medium',
+  highContrast: false,
+  voiceNavigation: false,
+  screenReader: true,
+  captions: true,
+  reduceAnimation: false,
+  language: 'english',
+}

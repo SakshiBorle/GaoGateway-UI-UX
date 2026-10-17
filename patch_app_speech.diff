@@ -1,0 +1,16 @@
+--- src/App.tsx
++++ src/App.tsx
+@@ -97,7 +97,12 @@
+     window.localStorage.setItem('gaongetaway-accessibility', JSON.stringify(a11y))
+   }, [a11y])
+ 
+-  useEffect(() => installContextualSpeech(a11y.language), [a11y.language])
++  useEffect(() => {
++    if (!a11y.hoverReadAloud) {
++      window.speechSynthesis?.cancel()
++    }
++    return installContextualSpeech(a11y.language, a11y.hoverReadAloud)
++  }, [a11y.language, a11y.hoverReadAloud])
+ 
+   // Auth handlers
+   const handleLogin = (loggedInUser: UserProfile) => {

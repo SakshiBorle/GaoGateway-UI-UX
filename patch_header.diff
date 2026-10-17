@@ -1,0 +1,94 @@
+--- src/components/Header.tsx
++++ src/components/Header.tsx
+@@ -25,24 +25,32 @@
+   { label: 'reviews', page: 'reviews' },
+ ]
+ 
+-export default function Header({ currentPage, navigate, a11y, onUpdateA11y, user, onOpenA11y, onOpenReadAloud }: HeaderProps) {
++export default function Header({ currentPage, navigate, a11y, onUpdateA11y, user, onOpenA11y, onOpenReadAloud, onLogout }: HeaderProps) {
+   const [menuOpen, setMenuOpen] = useState(false)
+   const [languageOpen, setLanguageOpen] = useState(false)
++  const [accountMenuOpen, setAccountMenuOpen] = useState(false)
+   const [languageNotice, setLanguageNotice] = useState('')
+-  const profileRef = useRef<HTMLDivElement>(null)
++  const languageRef = useRef<HTMLDivElement>(null)
++  const accountRef = useRef<HTMLDivElement>(null)
+ 
+   useEffect(() => {
+     const close = (event: MouseEvent) => {
+-      if (profileRef.current && !profileRef.current.contains(event.target as Node)) setLanguageOpen(false)
++      if (languageRef.current && !languageRef.current.contains(event.target as Node)) setLanguageOpen(false)
++      if (accountRef.current && !accountRef.current.contains(event.target as Node)) setAccountMenuOpen(false)
+     }
+     document.addEventListener('mousedown', close)
+     return () => document.removeEventListener('mousedown', close)
+   }, [])
+ 
+   const go = (page: Page) => {
+     navigate(page)
+     setMenuOpen(false)
+     setLanguageOpen(false)
++    setAccountMenuOpen(false)
++  }
++  
++  const handleLogout = () => {
++    setAccountMenuOpen(false)
++    onLogout()
+   }
+ 
+   const changeLanguage = (language: AccessibilityConfig['language'], name: string) => {
+@@ -53,6 +61,11 @@
+     window.setTimeout(() => setLanguageNotice(''), 2400)
+   }
+ 
++  const toggleHoverSpeech = () => {
++    const enabled = !a11y.hoverReadAloud
++    onUpdateA11y({ ...a11y, hoverReadAloud: enabled })
++  }
++
+   return (
+     <header className="site-header">
+       <div className="site-header__inner">
+@@ -74,15 +87,41 @@
+         </nav>
+ 
+         <div className="header-actions">
+-          <button className="icon-button has-tooltip profile-action" data-speech="profile" data-speech-click="Profile. View your bookings, saved trips and itineraries." data-tooltip="Open your profile" title="Open your profile" onClick={() => go(user?.role === 'admin' ? 'admin' : user ? 'account' : 'auth')} aria-label={translate(a11y.language, 'profile')}>
+-            <span aria-hidden="true">👤</span>
++          <button
++            className="nav-link"
++            style={{ padding: '0.4rem 0.8rem', background: a11y.hoverReadAloud ? '#e8f5e9' : '#ffebee', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600 }}
++            onClick={toggleHoverSpeech}
++            aria-label={`Toggle hover read-aloud. Currently ${a11y.hoverReadAloud ? 'ON' : 'OFF'}`}
++          >
++            Hover Read-Aloud: {a11y.hoverReadAloud ? 'ON' : 'OFF'}
+           </button>
++
++          {!user ? (
++            <button className="nav-link" style={{ fontWeight: 600 }} onClick={() => go('auth')}>
++              Login
++            </button>
++          ) : (
++            <div className="profile-menu" ref={accountRef}>
++              <button className="icon-button has-tooltip profile-action" data-speech="profile" data-speech-click="Profile. View your bookings, saved trips and itineraries." data-tooltip="Open your profile" title="Open your profile" onClick={() => setAccountMenuOpen(!accountMenuOpen)} aria-label={translate(a11y.language, 'profile')} aria-expanded={accountMenuOpen}>
++                <span aria-hidden="true">👤</span>
++              </button>
++              {accountMenuOpen && (
++                <div className="profile-popover language-popover" style={{ right: 0 }}>
++                  <button onClick={() => go('account')}>Profile</button>
++                  {user.role === 'admin' && <button onClick={() => go('admin')}>Admin</button>}
++                  <button onClick={handleLogout} style={{ color: '#8B1A1A', fontWeight: 600 }}>Logout</button>
++                </div>
++              )}
++            </div>
++          )}
++
+           <button className="icon-button has-tooltip settings-action" data-speech="settings" data-speech-click="Settings. Customize your website preferences." data-tooltip="Open settings" title="Open settings" onClick={() => go('settings')} aria-label={translate(a11y.language, 'settings')}>
+             <span aria-hidden="true">⚙️</span>
+           </button>
+-          <div className="profile-menu" ref={profileRef}>
++          
++          <div className="profile-menu" ref={languageRef}>
+             <button className="icon-button has-tooltip" data-speech="language" data-speech-click="Language. Choose your preferred language." data-tooltip="Change language" title="Change language" onClick={() => setLanguageOpen(value => !value)} aria-label={translate(a11y.language, 'language')} aria-expanded={languageOpen}>
+               <span aria-hidden="true">🌐</span>
+             </button>

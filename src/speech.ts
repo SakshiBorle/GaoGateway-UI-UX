@@ -1,0 +1,196 @@
+import { useEffect, useRef, useState } from 'react'
+import type { AccessibilityConfig } from './types'
+
+type Language = AccessibilityConfig['language']
+
+const languageCodes: Record<Language, string> = {
+  english: 'en-IN',
+  hindi: 'hi-IN',
+  marathi: 'mr-IN',
+}
+
+const contextualCopy: Record<Language, Record<string, string>> = {
+  english: {
+    'profile. view': 'Profile. View your bookings, saved trips and itineraries.',
+    'settings. customize': 'Settings. Customize your website preferences.',
+    'language. choose': 'Language. Choose your preferred language.',
+    'generate stay plan': 'Generate a personalized stay plan.',
+    'create my own itinerary': 'Create your own itinerary.',
+    'confirm booking': 'Confirm your booking.',
+    'edit activities': 'Edit activities in your itinerary.',
+    profile: 'Open your profile.',
+    settings: 'Open settings.',
+    language: 'Change language.',
+    accessibility: 'Open accessibility settings.',
+    'book a stay': 'Start booking your stay.',
+    'check availability': 'Check availability.',
+    stay: 'Explore our stay options.',
+    story: 'Learn about our story.',
+    'our story': 'Learn about our story.',
+    logout: 'Log out of your account.',
+    login: 'Log in to your account.',
+    'read aloud': 'Read this page aloud.',
+    microphone: 'Enter text using your voice.',
+  },
+  hindi: {
+    'profile. view': 'प्रोफ़ाइल। अपनी बुकिंग, सहेजी गई यात्राएँ और यात्रा कार्यक्रम देखें।',
+    'settings. customize': 'सेटिंग्स। अपनी वेबसाइट प्राथमिकताएँ बदलें।',
+    'language. choose': 'भाषा। अपनी पसंदीदा भाषा चुनें।',
+    'generate stay plan': 'अपनी पसंद के अनुसार ठहरने की योजना बनाएँ।',
+    'create my own itinerary': 'अपना यात्रा कार्यक्रम बनाएँ।',
+    'confirm booking': 'अपनी बुकिंग की पुष्टि करें।',
+    'edit activities': 'अपने यात्रा कार्यक्रम की गतिविधियाँ बदलें।',
+    profile: 'अपनी प्रोफ़ाइल खोलें।',
+    settings: 'सेटिंग्स खोलें।',
+    language: 'भाषा बदलें।',
+    accessibility: 'सुगम्यता सेटिंग्स खोलें।',
+    'book a stay': 'ठहरने की बुकिंग करें।',
+    'check availability': 'उपलब्धता देखें।',
+    'read aloud': 'इस पृष्ठ को सुनें।',
+    microphone: 'अपनी आवाज़ से टेक्स्ट दर्ज करें।',
+  },
+  marathi: {
+    'profile. view': 'प्रोफाइल. तुमच्या बुकिंग्ज, जतन केलेल्या सहली आणि नियोजने पहा.',
+    'settings. customize': 'सेटिंग्ज. वेबसाइटची प्राधान्ये बदला.',
+    'language. choose': 'भाषा. तुमची पसंतीची भाषा निवडा.',
+    'generate stay plan': 'तुमच्यासाठी वैयक्तिक मुक्काम योजना तयार करा.',
+    'create my own itinerary': 'तुमचे स्वतःचे नियोजन तयार करा.',
+    'confirm booking': 'तुमच्या बुकिंगची पुष्टी करा.',
+    'edit activities': 'तुमच्या नियोजनातील उपक्रम बदला.',
+    profile: 'तुमचे प्रोफाइल उघडा.',
+    settings: 'सेटिंग्ज उघडा.',
+    language: 'भाषा बदला.',
+    accessibility: 'सुलभता सेटिंग्ज उघडा.',
+    'book a stay': 'मुक्काम बुक करा.',
+    'check availability': 'उपलब्धता तपासा.',
+    'read aloud': 'हे पृष्ठ मोठ्याने वाचा.',
+    microphone: 'तुमच्या आवाजाने मजकूर लिहा.',
+  },
+}
+
+export function speak(text: string, language: Language, interrupt = true) {
+  if (!('speechSynthesis' in window) || !text.trim()) return
+  if (interrupt) window.speechSynthesis.cancel()
+  const normalized = text.trim().toLowerCase()
+  const phrase = Object.entries(contextualCopy[language]).find(([key]) => normalized.includes(key))?.[1] || text
+  const utterance = new SpeechSynthesisUtterance(phrase)
+  utterance.lang = languageCodes[language]
+  window.speechSynthesis.speak(utterance)
+}
+
+export function installContextualSpeech(language: Language, enabled: boolean) {
+  let lastElement: Element | null = null
+  let lastSpokenAt = 0
+
+  const announce = (target: EventTarget | null, clicked = false) => {
+    const element = target instanceof Element ? target.closest('button, [role="button"], a, [data-speech]') : null
+    if (!element) return
+    const now = Date.now()
+    if (!enabled) return
+    if (!clicked && element === lastElement && now - lastSpokenAt < 1200) return
+    const text = element.getAttribute('data-speech')
+      || element.getAttribute('aria-label')
+      || element.getAttribute('title')
+      || element.textContent
+      || ''
+    if (!text.trim()) return
+    lastElement = element
+    lastSpokenAt = now
+    speak(text.replace(/\s+/g, ' ').trim(), language)
+  }
+
+  const onPointer = (event: Event) => announce(event.target)
+  const onFocus = (event: FocusEvent) => announce(event.target)
+  const onClick = (event: Event) => {
+    const element = event.target instanceof Element ? event.target.closest('[data-speech-click]') : null
+    if (element) announce(element, true)
+  }
+
+  document.addEventListener('pointerover', onPointer)
+  document.addEventListener('focusin', onFocus)
+  document.addEventListener('click', onClick)
+  return () => {
+    document.removeEventListener('pointerover', onPointer)
+    document.removeEventListener('focusin', onFocus)
+    document.removeEventListener('click', onClick)
+  }
+}
+
+interface SpeechRecognitionEventLike extends Event {
+  results: { [index: number]: { [index: number]: { transcript: string } } }
+}
+
+interface SpeechRecognitionErrorEventLike extends Event {
+  error: string
+}
+
+interface RecognitionLike {
+  lang: string
+  interimResults: boolean
+  continuous: boolean
+  start: () => void
+  stop: () => void
+  abort: () => void
+  onresult: ((event: SpeechRecognitionEventLike) => void) | null
+  onerror: ((event: SpeechRecognitionErrorEventLike) => void) | null
+  onend: (() => void) | null
+}
+
+type RecognitionConstructor = new () => RecognitionLike
+
+export function useSpeechToText(language: Language, onTranscript: (text: string) => void) {
+  const [status, setStatus] = useState<'idle' | 'listening' | 'error' | 'unsupported'>('idle')
+  const [errorReason, setErrorReason] = useState<string>('')
+  const recognition = useRef<RecognitionLike | null>(null)
+  const transcriptHandler = useRef(onTranscript)
+  transcriptHandler.current = onTranscript
+
+  const start = () => {
+    setErrorReason('')
+    const browser = window as typeof window & {
+      SpeechRecognition?: RecognitionConstructor
+      webkitSpeechRecognition?: RecognitionConstructor
+    }
+    const Constructor = browser.SpeechRecognition || browser.webkitSpeechRecognition
+    if (!Constructor) {
+      setStatus('unsupported')
+      return
+    }
+    window.speechSynthesis?.cancel()
+    recognition.current?.abort()
+    const instance = new Constructor()
+    recognition.current = instance
+    instance.lang = languageCodes[language]
+    instance.interimResults = false
+    instance.continuous = false
+    instance.onresult = event => {
+      const text = event.results[0]?.[0]?.transcript?.trim()
+      if (text) {
+        transcriptHandler.current(text)
+        setStatus('idle')
+      } else {
+        setStatus('error')
+      }
+    }
+    instance.onerror = (event) => { 
+      console.error('Speech recognition error:', event.error)
+      setErrorReason(event.error)
+      setStatus('error') 
+    }
+    instance.onend = () => setStatus(current => current === 'listening' ? 'error' : current)
+    setStatus('listening')
+    try {
+      instance.start()
+    } catch {
+      setStatus('error')
+    }
+  }
+
+  const stop = () => {
+    recognition.current?.stop()
+    setStatus('idle')
+  }
+
+  useEffect(() => () => recognition.current?.abort(), [])
+  return { status, errorReason, start, stop, retry: start }
+}

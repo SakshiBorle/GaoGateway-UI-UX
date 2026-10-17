@@ -1,0 +1,17 @@
+--- src/types.ts
++++ src/types.ts
+@@ -33,6 +33,7 @@
+   captions: boolean
+   reduceAnimation: boolean
+   language: 'english' | 'marathi' | 'hindi'
++  hoverReadAloud: boolean
+ }
+ 
+ export interface BookingState {
+@@ -98,5 +99,6 @@
+   screenReader: true,
+   captions: true,
+   reduceAnimation: false,
+   language: 'english',
++  hoverReadAloud: true,
+ }

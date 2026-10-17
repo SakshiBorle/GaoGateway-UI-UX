@@ -1,0 +1,19 @@
+--- src/speech.ts
++++ src/speech.ts
+@@ -62,7 +62,7 @@
+   window.speechSynthesis.speak(utterance)
+ }
+ 
+-export function installContextualSpeech(language: Language) {
++export function installContextualSpeech(language: Language, enabled: boolean) {
+   let lastElement: Element | null = null
+   let lastSpokenAt = 0
+ 
+@@ -70,6 +70,7 @@
+     const element = target instanceof Element ? target.closest('button, [role="button"], a, [data-speech]') : null
+     if (!element) return
+     const now = Date.now()
++    if (!enabled) return
+     if (!clicked && element === lastElement && now - lastSpokenAt < 1200) return
+     const text = element.getAttribute('data-speech')
+       || element.getAttribute('aria-label')
